@@ -63,7 +63,7 @@ async def spin_wheel(message: discord.Message, category_name: str, options):
     final_choice = options[final_index]
 
     # How many frames in the animation
-    frames = 7  # 5–8 is a good range
+    frames = 10  # 5–8 is a good range
 
     # Build the sequence of indices the highlight will visit.
     # Last index in seq must be final_index.
