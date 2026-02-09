@@ -3,6 +3,10 @@ from discord.ext import commands
 
 from config import CATEGORIES
 from wheel import spin_wheel
+from wordle import run_wordle_analysis
+from wordle import scrape_wordle_history, get_all_wordle_results
+
+
 
 
 class WheelCog(commands.Cog):
@@ -34,3 +38,27 @@ class WheelCog(commands.Cog):
 
         # Run the spin animation and show the result
         await spin_wheel(msg, category, options)
+
+
+    @commands.command(name="analyse_wordle")
+    async def wordle_average(self, ctx):
+        """
+        Plot average Wordle guesses per player and send it as an image.
+        """
+        await ctx.send("📊 Analyzing Wordle results… this may take a moment")
+
+        try:
+            image_path = await run_wordle_analysis(self.bot)
+        except Exception as e:
+            await ctx.send(f"❌ Error while analyzing Wordle data:\n```{e}```")
+            return
+
+        await ctx.send(
+            content="📈 **Average Wordle guesses per player**",
+            file=discord.File(image_path)
+        )
+
+
+
+
+
