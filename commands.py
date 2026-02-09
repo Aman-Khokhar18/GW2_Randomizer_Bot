@@ -40,7 +40,7 @@ class WheelCog(commands.Cog):
         await spin_wheel(msg, category, options)
 
 
-    @commands.command(name="analyse_wordle")
+    @commands.command(name="worlde_stats")
     async def wordle_average(self, ctx):
         """
         Plot average Wordle guesses per player and send it as an image.
@@ -57,6 +57,7 @@ class WheelCog(commands.Cog):
             content="📈 **Average Wordle guesses per player**",
             file=discord.File(image_path)
         )
+
 
 
 
