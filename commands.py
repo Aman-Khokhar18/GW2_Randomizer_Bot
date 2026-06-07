@@ -7,8 +7,6 @@ from wordle import run_wordle_analysis
 from wordle import scrape_wordle_history, get_all_wordle_results
 
 
-
-
 class WheelCog(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
@@ -31,14 +29,11 @@ class WheelCog(commands.Cog):
 
         options = CATEGORIES[category]
 
-        # Initial message
         msg = await ctx.send(
             f"🎲 Rolling a **{category.upper()}** build for you, {ctx.author.mention}..."
         )
 
-        # Run the spin animation and show the result
         await spin_wheel(msg, category, options)
-
 
     @commands.command(name="worlde_stats")
     async def wordle_average(self, ctx):
@@ -58,8 +53,70 @@ class WheelCog(commands.Cog):
             file=discord.File(image_path)
         )
 
+    @commands.command(name="servers")
+    async def servers(self, ctx):
+        """
+        List all servers the bot is currently in.
+        """
+        if not self.bot.guilds:
+            await ctx.send("Bot is not in any servers.")
+            return
+
+        lines = [
+            f"{guild.name} ({guild.id}) - {guild.member_count} members"
+            for guild in self.bot.guilds
+        ]
+
+        message = "📋 **Servers I'm in:**\n```" + "\n".join(lines) + "```"
+
+        if len(message) > 2000:
+            await ctx.send(
+                f"Too many servers to display ({len(self.bot.guilds)} total)."
+            )
+        else:
+            await ctx.send(message)
+
+    @commands.command(name="servermembers")
+    async def server_members(self, ctx, guild_id: int):
+        """
+        List members from a specific server.
+        Usage: !servermembers <guild_id>
+        """
+        guild = self.bot.get_guild(guild_id)
+
+        if guild is None:
+            await ctx.send(
+                "❌ Bot is not in that server or the guild ID is invalid."
+            )
+            return
+
+        members = [
+            f"{member.display_name} ({member.id})"
+            for member in guild.members
+        ]
+
+        if not members:
+            await ctx.send(
+                f"⚠️ No member data available for **{guild.name}**."
+            )
+            return
+
+        header = (
+            f"👥 Members in **{guild.name}** "
+            f"({guild.member_count} total):\n```"
+        )
+
+        chunk = ""
+        for member in members:
+            if len(header + chunk + member + "\n```") > 1900:
+                await ctx.send(header + chunk + "```")
+                chunk = ""
+
+            chunk += member + "\n"
+
+        if chunk:
+            await ctx.send(header + chunk + "```")
 
 
-
-
-
+async def setup(bot):
+    await bot.add_cog(WheelCog(bot))
