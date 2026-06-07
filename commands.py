@@ -22,15 +22,19 @@ class WheelCog(commands.Cog):
             return
 
         category = category.lower()
+
         if category not in CATEGORIES:
             valid = ", ".join(f"`{c}`" for c in CATEGORIES.keys())
-            await ctx.send(f"Unknown category `{category}`.\nValid options: {valid}")
+            await ctx.send(
+                f"Unknown category `{category}`.\nValid options: {valid}"
+            )
             return
 
         options = CATEGORIES[category]
 
         msg = await ctx.send(
-            f"🎲 Rolling a **{category.upper()}** build for you, {ctx.author.mention}..."
+            f"🎲 Rolling a **{category.upper()}** build for you, "
+            f"{ctx.author.mention}..."
         )
 
         await spin_wheel(msg, category, options)
@@ -40,12 +44,17 @@ class WheelCog(commands.Cog):
         """
         Plot average Wordle guesses per player and send it as an image.
         """
-        await ctx.send("📊 Analyzing Wordle results… this may take a moment")
+        await ctx.send(
+            "📊 Analyzing Wordle results… this may take a moment"
+        )
 
         try:
             image_path = await run_wordle_analysis(self.bot)
+
         except Exception as e:
-            await ctx.send(f"❌ Error while analyzing Wordle data:\n```{e}```")
+            await ctx.send(
+                f"❌ Error while analyzing Wordle data:\n```{e}```"
+            )
             return
 
         await ctx.send(
@@ -62,60 +71,82 @@ class WheelCog(commands.Cog):
             await ctx.send("Bot is not in any servers.")
             return
 
-        lines = [
-            f"{guild.name} ({guild.id}) - {guild.member_count} members"
-            for guild in self.bot.guilds
-        ]
+        lines = []
 
-        message = "📋 **Servers I'm in:**\n```" + "\n".join(lines) + "```"
+        for guild in self.bot.guilds:
+            lines.append(
+                f"{guild.name} ({guild.id}) - "
+                f"{guild.member_count} members"
+            )
 
-        if len(message) > 2000:
+        output = "\n".join(lines)
+
+        if len(output) > 1900:
             await ctx.send(
-                f"Too many servers to display ({len(self.bot.guilds)} total)."
+                f"Bot is in {len(self.bot.guilds)} servers."
             )
         else:
-            await ctx.send(message)
+            await ctx.send(
+                f"📋 **Servers I'm in:**\n```{output}```"
+            )
 
     @commands.command(name="servermembers")
     async def server_members(self, ctx, guild_id: int):
         """
-        List members from a specific server.
-        Usage: !servermembers <guild_id>
+        Force fetch all members from a guild.
+
+        Usage:
+        !servermembers <guild_id>
         """
         guild = self.bot.get_guild(guild_id)
 
         if guild is None:
             await ctx.send(
-                "❌ Bot is not in that server or the guild ID is invalid."
+                "❌ Bot is not in that server or guild ID is invalid."
             )
             return
 
-        members = [
-            f"{member.display_name} ({member.id})"
-            for member in guild.members
-        ]
-
-        if not members:
-            await ctx.send(
-                f"⚠️ No member data available for **{guild.name}**."
-            )
-            return
-
-        header = (
-            f"👥 Members in **{guild.name}** "
-            f"({guild.member_count} total):\n```"
+        await ctx.send(
+            f"🔍 Fetching members from **{guild.name}**..."
         )
 
-        chunk = ""
-        for member in members:
-            if len(header + chunk + member + "\n```") > 1900:
-                await ctx.send(header + chunk + "```")
-                chunk = ""
+        try:
+            members = []
 
-            chunk += member + "\n"
+            async for member in guild.fetch_members(limit=None):
+                members.append(
+                    f"{member.display_name} ({member.id})"
+                )
 
-        if chunk:
-            await ctx.send(header + chunk + "```")
+            await ctx.send(
+                f"✅ Retrieved {len(members)} members "
+                f"from **{guild.name}**"
+            )
+
+            chunk = ""
+
+            for member in members:
+                line = member + "\n"
+
+                if len(chunk) + len(line) > 1800:
+                    await ctx.send(f"```{chunk}```")
+                    chunk = ""
+
+                chunk += line
+
+            if chunk:
+                await ctx.send(f"```{chunk}```")
+
+        except discord.Forbidden:
+            await ctx.send(
+                "❌ Missing permissions or "
+                "Server Members Intent is not enabled."
+            )
+
+        except Exception as e:
+            await ctx.send(
+                f"❌ Error fetching members:\n```{e}```"
+            )
 
 
 async def setup(bot):
